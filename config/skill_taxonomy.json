@@ -1,0 +1,48 @@
+{
+  "programming": {
+    "python": ["django", "flask", "fastapi", "pandas", "numpy", "scipy", "matplotlib", "seaborn", "jupyter", "pytest"],
+    "javascript": ["react", "reactjs", "vue", "vuejs", "angular", "angularjs", "node", "nodejs", "typescript", "express", "nextjs", "next.js", "gatsby"],
+    "java": ["spring", "springboot", "spring boot", "hibernate", "maven", "gradle", "junit"],
+    "csharp": ["c#", ".net", "dotnet", "asp.net", "entity framework", "blazor", "unity"],
+    "cpp": ["c++", "stl", "boost", "cmake", "qt"],
+    "go": ["golang", "gin", "gorilla"],
+    "rust": ["cargo", "tokio", "actix"],
+    "ruby": ["rails", "ruby on rails", "sinatra"],
+    "php": ["laravel", "symfony", "wordpress", "drupal"]
+  },
+  "data_science": {
+    "machine_learning": ["tensorflow", "pytorch", "keras", "scikit-learn", "sklearn", "xgboost", "lightgbm", "catboost", "mlflow", "huggingface"],
+    "deep_learning": ["neural networks", "cnn", "rnn", "lstm", "transformer", "bert", "gpt", "llm"],
+    "data_analysis": ["sql", "excel", "tableau", "powerbi", "power bi", "looker", "metabase", "dbt"],
+    "big_data": ["spark", "pyspark", "hadoop", "hive", "presto", "airflow", "kafka", "flink"],
+    "nlp": ["natural language processing", "spacy", "nltk", "text mining", "sentiment analysis"]
+  },
+  "cloud": {
+    "aws": ["ec2", "s3", "lambda", "ecs", "eks", "rds", "dynamodb", "sagemaker", "cloudformation", "cdk"],
+    "azure": ["azure functions", "azure devops", "azure ml", "cosmos db", "azure kubernetes"],
+    "gcp": ["google cloud", "bigquery", "cloud functions", "gke", "cloud run", "vertex ai"],
+    "general": ["cloud computing", "iaas", "paas", "saas", "serverless", "microservices"]
+  },
+  "devops": {
+    "containers": ["docker", "kubernetes", "k8s", "helm", "podman", "container orchestration"],
+    "cicd": ["ci/cd", "jenkins", "github actions", "gitlab ci", "circleci", "travis", "argo"],
+    "infrastructure": ["terraform", "ansible", "puppet", "chef", "cloudformation", "pulumi"],
+    "monitoring": ["prometheus", "grafana", "datadog", "splunk", "elk", "elasticsearch", "kibana", "new relic"]
+  },
+  "databases": {
+    "sql": ["postgresql", "postgres", "mysql", "oracle", "sql server", "mssql", "mariadb", "sqlite"],
+    "nosql": ["mongodb", "cassandra", "couchdb", "firebase", "dynamodb"],
+    "cache": ["redis", "memcached", "elasticache"],
+    "search": ["elasticsearch", "solr", "algolia", "meilisearch"]
+  },
+  "web": {
+    "frontend": ["html", "css", "sass", "scss", "less", "tailwind", "bootstrap", "webpack", "vite", "babel"],
+    "backend": ["rest", "restful", "graphql", "grpc", "websocket", "api design", "microservices"],
+    "mobile": ["react native", "flutter", "swift", "kotlin", "android", "ios", "xamarin"]
+  },
+  "soft_skills": {
+    "leadership": ["team lead", "tech lead", "management", "mentoring", "coaching", "stakeholder management"],
+    "communication": ["presentation", "technical writing", "documentation", "cross-functional"],
+    "methodology": ["agile", "scrum", "kanban", "lean", "waterfall", "jira", "confluence", "sprint planning"]
+  }
+}
