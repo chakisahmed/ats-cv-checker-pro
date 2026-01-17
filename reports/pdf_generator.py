@@ -81,7 +81,7 @@ class ATSReportPDF(FPDF):
 
         for item in items:
             self.set_x(indent)
-            self.multi_cell(0, 6, f"• {item}")
+            self.multi_cell(0, 6, f"- {item}")
 
 
 def generate_pdf_report(
@@ -160,7 +160,7 @@ def generate_pdf_report(
             pdf.set_font("Helvetica", "", 10)
             pdf.set_text_color(55, 65, 81)
             pdf.set_x(15)
-            pdf.multi_cell(0, 6, f"• {gap.description}")
+            pdf.multi_cell(0, 6, f"- {gap.description}")
             pdf.set_x(20)
             pdf.set_font("Helvetica", "I", 9)
             pdf.set_text_color(107, 114, 128)
