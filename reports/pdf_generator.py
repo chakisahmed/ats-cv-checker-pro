@@ -111,9 +111,9 @@ def generate_pdf_report(
     for comp in score_result.get("components", []):
         score = comp["score"]
         if score >= 70:
-            status = "✓"
+            status = "[OK]"
         else:
-            status = "✗"
+            status = "[X]"
 
         pdf.set_text_color(55, 65, 81)
         pdf.cell(80, 7, f"{comp['name']}", ln=False)
@@ -164,7 +164,7 @@ def generate_pdf_report(
             pdf.set_x(20)
             pdf.set_font("Helvetica", "I", 9)
             pdf.set_text_color(107, 114, 128)
-            pdf.multi_cell(0, 5, f"  → {gap.suggestion}")
+            pdf.multi_cell(0, 5, f"  -> {gap.suggestion}")
             pdf.ln(2)
 
     # Recommendations
