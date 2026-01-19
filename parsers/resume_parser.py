@@ -262,10 +262,9 @@ class ResumeParser:
 
                 # Extract title and company from pre_text
                 lines = [l.strip() for l in pre_text.split("\n") if l.strip()]
-                if lines:
-                    # Pseudo-code logic
-                    line_a = lines[-1] # Bottom line
-                    line_b = lines[-2] # Top line
+                if len(lines) >= 2:
+                    line_a = lines[-1]  # Bottom line
+                    line_b = lines[-2]  # Top line
 
                     # Check if the bottom line is a Company
                     doc_a = self.nlp(line_a)
@@ -273,9 +272,22 @@ class ResumeParser:
                         exp.company = line_a
                         exp.title = line_b
                     else:
-                        # Fallback to the original assumption (Company is top)
-                        exp.company = line_b
-                        exp.title = line_a
+                        # Check if top line is an ORG
+                        doc_b = self.nlp(line_b)
+                        if any(ent.label_ == "ORG" for ent in doc_b.ents):
+                            exp.company = line_b
+                            exp.title = line_a
+                        else:
+                            # Default: assume first line is title, second is company
+                            exp.title = line_b
+                            exp.company = line_a
+                elif len(lines) == 1:
+                    # Single line - try to determine if it's company or title
+                    doc = self.nlp(lines[0])
+                    if any(ent.label_ == "ORG" for ent in doc.ents):
+                        exp.company = lines[0]
+                    else:
+                        exp.title = lines[0]
 
                 # Extract bullets from post_text
                 bullets = re.findall(r"[•\-\*]\s*(.+)", post_text)
@@ -307,7 +319,22 @@ class ResumeParser:
                 edu.degree = match.group(0)
                 education.append(edu)
 
-        # If no structured extraction, add the whole section
+        # Fallback: Use spaCy to find institutions (ORG entities)
+        if not education and education_text:
+            doc = self.nlp(education_text)
+            for ent in doc.ents:
+                if ent.label_ == "ORG":
+                    edu = Education()
+                    edu.institution = ent.text
+                    # Try to extract surrounding text for field of study
+                    start = max(0, ent.start_char - 50)
+                    end = min(len(education_text), ent.end_char + 100)
+                    context = education_text[start:end]
+                    edu.degree = context.strip()[:200]
+                    education.append(edu)
+                    break  # Take first institution found
+
+        # Ultimate fallback: just capture the raw text
         if not education and education_text:
             edu = Education()
             edu.degree = education_text[:200]  # Truncate
@@ -331,13 +358,25 @@ class ResumeParser:
         if not project_text:
             return projects
 
+        # Regex to detect date-only lines
+        DATE_ONLY_PATTERN = r"^(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)[\s,]*\d{4}(?:\s*[-–—]\s*(?:Present|Current|Now|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s,]*\d{4}))?$"
+
         # Simple split by double newlines or bullets
         entries = re.split(r"\n\n+", project_text)
         for entry in entries:
             if entry.strip():
+                lines = entry.strip().split("\n")
+                project_name = lines[0].strip()[:100]
+
+                # Skip date-only first lines
+                if re.match(DATE_ONLY_PATTERN, project_name, re.IGNORECASE):
+                    project_name = (
+                        lines[1].strip()[:100] if len(lines) > 1 else "Unnamed Project"
+                    )
+
                 projects.append(
                     {
-                        "name": entry.split("\n")[0].strip()[:100],
+                        "name": project_name,
                         "description": entry.strip(),
                     }
                 )

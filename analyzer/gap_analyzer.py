@@ -251,10 +251,25 @@ class GapAnalyzer:
         for exp in experiences:
             for bullet in exp.bullets:
                 total_bullets += 1
-                # Check for numbers, percentages, dollar amounts
+                # Check for numbers, percentages, dollar amounts, and other metrics
                 if re.search(
-                    r"\d+%|\$[\d,]+|\d+\+?(?:\s+(?:users|customers|clients|projects|team|people))",
+                    r"""
+                        \d+%                                    # Percentages: 50%, 100%
+                        |\$[\d,]+                               # USD: $5,000
+                        |[£€¥₹][\d,]+                           # Other currencies: £500, €1000, ¥5000
+                        |[\d,]+\s*(?:USD|EUR|GBP|CAD|AUD)       # Currency codes: 5000 USD
+                        |\d+\+?\s*(?:users|customers|clients|projects|team|people|employees|members|engineers)
+                        |\d+\+?\s*(?:hours?|minutes?|days?|weeks?|months?|years?)  # Time units
+                        |\d+\+?\s*(?:TB|GB|MB|KB|PB)            # Data units
+                        |\d+x                                   # Multipliers: 10x, 5x
+                        |\d+\s*(?:ms|seconds?|milliseconds?)    # Latency/time
+                        |reduced\s+(?:by\s+)?\d+                # "reduced by 50"
+                        |increased?\s+(?:by\s+)?\d+             # "increased by 30"
+                        |improved?\s+(?:by\s+)?\d+              # "improved by 20"
+                        |saved?\s+(?:[\d,]+|.*?\d+)             # "saved $5000", "saved 100 hours"
+                    """,
                     bullet,
+                    re.VERBOSE | re.IGNORECASE,
                 ):
                     quantified_bullets += 1
 
