@@ -6,34 +6,56 @@ from typing import List, Dict, Tuple
 import numpy as np
 import os
 
+try:
+    import streamlit as st
+
+    HAS_STREAMLIT = True
+except ImportError:
+    HAS_STREAMLIT = False
+
 _model = None
 
 
-def get_model():
-    """Lazy load sentence transformer model with proper device handling."""
-    global _model
-    if _model is None:
-        # Try to load in offline mode first (use cached model)
-        os.environ["HF_HUB_OFFLINE"] = "1"
-        os.environ["TRANSFORMERS_OFFLINE"] = "1"
+def _load_model():
+    """Internal function to load the model."""
+    # Try to load in offline mode first (use cached model)
+    os.environ["HF_HUB_OFFLINE"] = "1"
+    os.environ["TRANSFORMERS_OFFLINE"] = "1"
 
-        try:
-            from sentence_transformers import SentenceTransformer
+    try:
+        from sentence_transformers import SentenceTransformer
 
-            # Force CPU to avoid meta tensor issues
-            os.environ["CUDA_VISIBLE_DEVICES"] = ""
-            device = "cpu"
+        # Force CPU to avoid meta tensor issues
+        os.environ["CUDA_VISIBLE_DEVICES"] = ""
+        device = "cpu"
 
-            # Load model with explicit device setting (offline mode)
-            _model = SentenceTransformer("all-MiniLM-L6-v2", device=device)
-            print("Loaded sentence transformer model successfully")
+        # Load model with explicit device setting (offline mode)
+        model = SentenceTransformer("all-MiniLM-L6-v2", device=device)
+        print("Loaded sentence transformer model successfully")
+        return model
 
-        except Exception as e:
-            # Fallback to TF-IDF based embedder
-            print(f"Warning: Could not load sentence transformer ({e})")
-            print("Using TF-IDF based similarity fallback...")
-            _model = TFIDFEmbedder()
-    return _model
+    except Exception as e:
+        # Fallback to TF-IDF based embedder
+        print(f"Warning: Could not load sentence transformer ({e})")
+        print("Using TF-IDF based similarity fallback...")
+        return TFIDFEmbedder()
+
+
+# Streamlit-cached version (loaded once, shared across sessions)
+if HAS_STREAMLIT:
+
+    @st.cache_resource(show_spinner=False)
+    def get_model():
+        """Lazy load sentence transformer model with Streamlit caching."""
+        return _load_model()
+else:
+
+    def get_model():
+        """Lazy load sentence transformer model (no Streamlit caching)."""
+        global _model
+        if _model is None:
+            _model = _load_model()
+        return _model
 
 
 class TFIDFEmbedder:
@@ -96,26 +118,41 @@ class SemanticAnalyzer:
     def compute_section_similarities(
         self, cv_sections: Dict[str, str], jd_text: str
     ) -> Dict[str, float]:
-        """Compute similarity for each CV section against JD."""
+        """Compute similarity for each CV section against JD using batch encoding."""
         model = self._get_model()
         section_scores = {}
 
-        jd_embedding = model.encode([jd_text])[0]
+        # Filter valid sections and prepare batch
+        valid_sections = {
+            name: text for name, text in cv_sections.items() if text and text.strip()
+        }
+
+        if not valid_sections:
+            return {name: 0.0 for name in cv_sections}
+
+        # Batch encode: JD first, then all sections
+        all_texts = [jd_text] + list(valid_sections.values())
+        embeddings = model.encode(all_texts)
+
+        jd_embedding = embeddings[0]
         jd_norm = np.linalg.norm(jd_embedding)
 
-        for section_name, section_text in cv_sections.items():
-            if section_text and section_text.strip():
-                section_embedding = model.encode([section_text])[0]
-                section_norm = np.linalg.norm(section_embedding)
+        # Process section embeddings
+        for i, section_name in enumerate(valid_sections.keys()):
+            section_embedding = embeddings[i + 1]
+            section_norm = np.linalg.norm(section_embedding)
 
-                if section_norm > 0 and jd_norm > 0:
-                    similarity = np.dot(section_embedding, jd_embedding) / (
-                        section_norm * jd_norm
-                    )
-                    section_scores[section_name] = max(0.0, min(1.0, float(similarity)))
-                else:
-                    section_scores[section_name] = 0.0
+            if section_norm > 0 and jd_norm > 0:
+                similarity = np.dot(section_embedding, jd_embedding) / (
+                    section_norm * jd_norm
+                )
+                section_scores[section_name] = max(0.0, min(1.0, float(similarity)))
             else:
+                section_scores[section_name] = 0.0
+
+        # Set 0.0 for empty sections
+        for section_name in cv_sections:
+            if section_name not in section_scores:
                 section_scores[section_name] = 0.0
 
         return section_scores

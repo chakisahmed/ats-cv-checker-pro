@@ -87,11 +87,16 @@ st.markdown(
 def run_analysis(uploaded_file, job_description):
     """Run the analysis and store results in session state."""
     try:
+        # Create progress bar
+        progress = st.progress(0, text="📄 Parsing resume...")
+
         # Parse CV
         cv_text = parse_document(uploaded_file, uploaded_file.name)
 
         if not cv_text.strip():
             return False, "Could not extract text from CV"
+
+        progress.progress(10, text="⚙️ Initializing analyzers...")
 
         # Initialize analyzers
         resume_parser = ResumeParser()
@@ -103,19 +108,27 @@ def run_analysis(uploaded_file, job_description):
         rewriter = RewriteSuggester()
         optimizer = ATSOptimizer()
 
+        progress.progress(20, text="📋 Extracting resume structure...")
+
         # Parse resume structure
         parsed_resume = resume_parser.parse(cv_text)
+
+        progress.progress(30, text="🔑 Analyzing keywords...")
 
         # Extract keywords
         cv_keywords = keyword_analyzer.get_keyword_set(cv_text)
         jd_keywords = keyword_analyzer.get_keyword_set(job_description)
         keyword_result = keyword_analyzer.calculate_match(cv_keywords, jd_keywords)
 
+        progress.progress(45, text="🧠 Running semantic analysis...")
+
         # Semantic analysis
         semantic_score = semantic_analyzer.compute_similarity(cv_text, job_description)
         section_similarities = semantic_analyzer.compute_section_similarities(
             parsed_resume.sections, job_description
         )
+
+        progress.progress(60, text="💼 Evaluating experience relevance...")
 
         # Get all experience bullets
         all_bullets = []
@@ -125,6 +138,8 @@ def run_analysis(uploaded_file, job_description):
         experience_relevance = semantic_analyzer.compute_experience_relevance(
             all_bullets, job_description
         )
+
+        progress.progress(70, text="🎯 Matching skills...")
 
         # Skill matching
         cv_skills = list(keyword_analyzer.extract_keywords(cv_text)["skills"])
@@ -139,8 +154,12 @@ def run_analysis(uploaded_file, job_description):
             cv_skill_names, jd_skill_names
         )
 
+        progress.progress(80, text="🔍 Analyzing gaps...")
+
         # Gap analysis
         gaps = gap_analyzer.analyze(parsed_resume, jd_skill_names, cv_skill_names)
+
+        progress.progress(90, text="📊 Calculating scores...")
 
         # Calculate scores
         score_result = scorer.calculate_score(
@@ -160,6 +179,8 @@ def run_analysis(uploaded_file, job_description):
 
         # Bullet suggestions
         bullet_suggestions = rewriter.analyze_bullets(all_bullets[:10])
+
+        progress.progress(100, text="✅ Analysis complete!")
 
         # Store all results in session state
         st.session_state.results = {

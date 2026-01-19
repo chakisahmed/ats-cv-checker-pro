@@ -97,6 +97,26 @@ ats-cv-checker-pro/
     └── charts.py               # Plotly visualizations
 ```
 
+## Performance Optimizations
+
+The application includes several optimizations for faster analysis:
+
+- **Model Caching** - ML models are loaded once and cached across sessions using `@st.cache_resource`
+- **Batch Encoding** - Multiple texts are encoded in a single call for efficiency
+- **Progress Tracking** - Visual progress bar shows analysis stages in real-time
+- **TF-IDF Fallback** - Lightweight fallback when sentence-transformers can't load
+
+## Future Roadmap
+
+### Planned Enhancements
+
+- **Database Persistence** - Save analysis results for version comparison
+- **Task Queue Architecture** - For high-volume deployments:
+  - Frontend: Accept uploads → Send job tickets to queue
+  - Middleware: Redis/RabbitMQ for ticket management
+  - Workers: Separate processes for ML analysis
+  - Benefits: Non-blocking UI, horizontal scaling, better resource utilization
+
 ## License
 
 MIT License
