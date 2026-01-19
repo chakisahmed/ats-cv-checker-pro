@@ -42,6 +42,8 @@ def render_score_card(score: float, label: str, size: str = "large"):
 
 def render_skill_tags(skills: list, tag_type: str = "match"):
     """Render skill tags with appropriate styling."""
+    import html
+
     if tag_type == "match":
         bg_color = "#d1fae5"
         text_color = "#065f46"
@@ -55,19 +57,17 @@ def render_skill_tags(skills: list, tag_type: str = "match"):
         bg_color = "#e5e7eb"
         text_color = "#374151"
 
-    tags_html = ""
+    # Build tags with proper escaping
+    tags_list = []
     for skill in skills[:20]:  # Limit to 20
-        tags_html += f"""
-        <span style="
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            margin: 0.25rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            background-color: {bg_color};
-            color: {text_color};
-        ">{skill}</span>
-        """
+        # Escape HTML special characters in skill name
+        safe_skill = html.escape(str(skill))
+        tags_list.append(
+            f"""<span style="display: inline-block; padding: 0.25rem 0.75rem; margin: 0.25rem; border-radius: 20px; font-size: 0.85rem; background-color: {bg_color}; color: {text_color};">{safe_skill}</span>"""
+        )
+
+    # Wrap all tags in a container div
+    tags_html = f'<div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">{"".join(tags_list)}</div>'
 
     st.markdown(tags_html, unsafe_allow_html=True)
 

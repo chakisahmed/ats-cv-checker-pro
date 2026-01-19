@@ -91,12 +91,51 @@ class SkillMatcher:
         return []
 
     def calculate_coverage(self, cv_skills: List[str], jd_skills: List[str]) -> Dict:
-        """Calculate skill coverage with taxonomy awareness."""
+        """Calculate skill coverage with taxonomy awareness and fuzzy matching."""
+
+        def normalize_skill(skill: str) -> str:
+            """Normalize skill for comparison - handles variations."""
+            s = skill.lower().strip()
+            # Handle common variations
+            s = s.replace("-", " ").replace("_", " ")
+            s = s.replace(".js", "").replace("js", "")
+            s = s.replace("'s", "s").replace("'", "")
+            return s
+
+        def skills_match(cv_skill: str, jd_skill: str) -> bool:
+            """Check if two skills match with fuzzy logic."""
+            cv_norm = normalize_skill(cv_skill)
+            jd_norm = normalize_skill(jd_skill)
+
+            # Exact match after normalization
+            if cv_norm == jd_norm:
+                return True
+
+            # One contains the other
+            if cv_norm in jd_norm or jd_norm in cv_norm:
+                return True
+
+            # Handle variations like "react native" vs "react-native"
+            cv_words = set(cv_norm.split())
+            jd_words = set(jd_norm.split())
+            if cv_words == jd_words:
+                return True
+
+            return False
+
         cv_set = {s.lower().strip() for s in cv_skills}
         jd_set = {s.lower().strip() for s in jd_skills}
 
-        # Direct matches
+        # Direct matches (exact match after lowercasing)
         direct_matches = cv_set & jd_set
+
+        # Fuzzy matches (similar but not exact)
+        fuzzy_matches = set()
+        for cv_skill in cv_set:
+            for jd_skill in jd_set - direct_matches:
+                if jd_skill not in direct_matches and skills_match(cv_skill, jd_skill):
+                    fuzzy_matches.add(jd_skill)
+                    direct_matches.add(jd_skill)  # Count as matched
 
         # Taxonomy-based matches (CV skill related to JD skill)
         taxonomy_matches = set()
@@ -122,7 +161,7 @@ class SkillMatcher:
             coverage_score = min(1.0, direct_coverage + taxonomy_coverage)
 
         # Identify missing required skills
-        missing_direct = jd_set - cv_set
+        missing_direct = jd_set - direct_matches
         # Filter out those covered by taxonomy matches
         covered_by_taxonomy = {jd for cv, jd in taxonomy_matches}
         missing_critical = missing_direct - covered_by_taxonomy
@@ -130,6 +169,7 @@ class SkillMatcher:
         return {
             "coverage_score": coverage_score,
             "direct_matches": list(direct_matches),
+            "fuzzy_matches": list(fuzzy_matches),
             "taxonomy_matches": [(cv, jd) for cv, jd in taxonomy_matches],
             "missing_skills": list(missing_critical),
             "partially_covered": list(covered_by_taxonomy),

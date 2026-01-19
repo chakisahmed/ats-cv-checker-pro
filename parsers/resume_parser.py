@@ -263,8 +263,19 @@ class ResumeParser:
                 # Extract title and company from pre_text
                 lines = [l.strip() for l in pre_text.split("\n") if l.strip()]
                 if lines:
-                    exp.title = lines[-1] if lines else ""
-                    exp.company = lines[-2] if len(lines) > 1 else ""
+                    # Pseudo-code logic
+                    line_a = lines[-1] # Bottom line
+                    line_b = lines[-2] # Top line
+
+                    # Check if the bottom line is a Company
+                    doc_a = self.nlp(line_a)
+                    if any(ent.label_ == "ORG" for ent in doc_a.ents):
+                        exp.company = line_a
+                        exp.title = line_b
+                    else:
+                        # Fallback to the original assumption (Company is top)
+                        exp.company = line_b
+                        exp.title = line_a
 
                 # Extract bullets from post_text
                 bullets = re.findall(r"[•\-\*]\s*(.+)", post_text)

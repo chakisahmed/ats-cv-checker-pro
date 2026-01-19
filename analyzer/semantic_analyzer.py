@@ -4,18 +4,68 @@ Semantic analysis using sentence transformers.
 
 from typing import List, Dict, Tuple
 import numpy as np
+import os
 
 _model = None
 
 
 def get_model():
-    """Lazy load sentence transformer model."""
+    """Lazy load sentence transformer model with proper device handling."""
     global _model
     if _model is None:
-        from sentence_transformers import SentenceTransformer
+        # Try to load in offline mode first (use cached model)
+        os.environ["HF_HUB_OFFLINE"] = "1"
+        os.environ["TRANSFORMERS_OFFLINE"] = "1"
 
-        _model = SentenceTransformer("all-MiniLM-L6-v2")
+        try:
+            from sentence_transformers import SentenceTransformer
+
+            # Force CPU to avoid meta tensor issues
+            os.environ["CUDA_VISIBLE_DEVICES"] = ""
+            device = "cpu"
+
+            # Load model with explicit device setting (offline mode)
+            _model = SentenceTransformer("all-MiniLM-L6-v2", device=device)
+            print("Loaded sentence transformer model successfully")
+
+        except Exception as e:
+            # Fallback to TF-IDF based embedder
+            print(f"Warning: Could not load sentence transformer ({e})")
+            print("Using TF-IDF based similarity fallback...")
+            _model = TFIDFEmbedder()
     return _model
+
+
+class TFIDFEmbedder:
+    """Fallback embedder using TF-IDF when sentence-transformers fails to load."""
+
+    def __init__(self):
+        from sklearn.feature_extraction.text import TfidfVectorizer
+
+        self.vectorizer = TfidfVectorizer(max_features=384, stop_words="english")
+        self.is_fitted = False
+
+    def encode(self, texts, **kwargs):
+        """Return TF-IDF vectors as approximate embeddings."""
+        if not texts:
+            return np.zeros((0, 384))
+
+        try:
+            if not self.is_fitted:
+                # Fit on the texts
+                tfidf = self.vectorizer.fit_transform(texts)
+                self.is_fitted = True
+            else:
+                tfidf = self.vectorizer.transform(texts)
+
+            # Convert to dense and pad/truncate to 384 dims
+            dense = tfidf.toarray()
+            result = np.zeros((len(texts), 384))
+            result[:, : min(dense.shape[1], 384)] = dense[:, :384]
+            return result
+        except Exception as e:
+            print(f"TF-IDF encoding error: {e}")
+            return np.zeros((len(texts), 384))
 
 
 class SemanticAnalyzer:
