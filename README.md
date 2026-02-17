@@ -23,6 +23,18 @@ Advanced AI-powered ATS (Applicant Tracking System) CV checker with ML-based ana
 | Charts | Plotly |
 | PDF Export | fpdf2 |
 
+## Screenshots
+
+<img width="1517" height="595" alt="image" src="https://github.com/user-attachments/assets/78e1ace3-92e4-40fa-84eb-f6fb88d62fb3" />
+
+<img width="1521" height="672" alt="image" src="https://github.com/user-attachments/assets/8c8e14ce-b71f-42d5-a0db-a4d2421ad481" />
+
+<img width="1138" height="632" alt="image" src="https://github.com/user-attachments/assets/36b84247-9964-4456-ae52-840d7cc2a023" />
+
+<img width="1091" height="576" alt="image" src="https://github.com/user-attachments/assets/a5c9b058-8702-4b2c-a238-2f0c5709ca3b" />
+
+
+
 ## Installation
 
 ```bash
